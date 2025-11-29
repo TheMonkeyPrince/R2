@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Sound {
+  id       Int    @id @default(autoincrement())
+  title    String
+  author   String
+  category String
+  filename String
+}
+
+model ScheduledJob {
+  id         Int    @id @default(autoincrement())
+  type       JobType
+  runAt      DateTime? // for one-time jobs
+  cronExpr   String? // for cron-based jobs
+  payload    Json
+}
+
+enum JobType {
+  ONCE
+  CRON
+}

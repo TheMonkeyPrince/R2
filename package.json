@@ -1,33 +1,41 @@
 {
-  "dependencies": {
-    "@discordjs/voice": "^0.16.1",
-    "discord.js": "^14.11.0",
-    "express": "^4.18.2",
-    "googlethis": "^1.8.0",
-    "immutable": "^4.3.1",
-    "libsodium-wrappers": "^0.7.13",
-    "multer": "^1.4.5-lts.1",
-    "node-cron": "^3.0.2",
-    "play-dl": "^1.9.7",
-    "sqlite3": "^5.1.6",
-    "wikijs": "^6.4.1",
-    "winston": "^3.10.0"
-  },
   "name": "r2",
-  "version": "3.0.0",
-  "main": "./dist/App.js",
+  "version": "4.0.0",
+  "description": "",
+  "main": "dist/app/app.js",
   "scripts": {
-    "start": "ts-node ./src/app/App.ts",
-    "deploy": "ts-node ./src/deploy.ts",
-    "global-deploy": "ts-node ./src/global-deploy.ts"
+    "start": "npx tsc && node dist/app/app.js",
+    "dev-deploy": "npx tsc && node dist/app/deploy.js",
+    "global-deploy": "npx tsc && node dist/app/deploy.js global"
   },
+  "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "type": "module",
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/multer": "^1.4.11",
-    "@types/node-cron": "^3.0.8",
-    "@types/node-fetch": "^2.6.4"
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.10.1",
+    "prisma": "^7.0.1",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.19.0",
+    "@prisma/adapter-better-sqlite3": "^7.0.1",
+    "@prisma/client": "^7.0.1",
+    "@snazzah/davey": "^0.1.8",
+    "@types/cron": "^2.0.1",
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "winston": "^3.18.3",
+    "ws": "^8.18.3"
   }
 }

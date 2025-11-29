@@ -1,8 +1,10 @@
-dist/
-logs/
-node_modules/
-public/sounds/
-db.sqlite
-*.bat
-*.bash
+dist
+node_modules
 ecosystem.config.js
+.env
+*.db
+sounds/
+migrations/
+logs/
+
+src/generated/prisma

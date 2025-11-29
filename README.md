@@ -1,2 +1,0 @@
-db.sqlite:
-	CREATE TABLE "scheduled_messages" ("id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "cron" TEXT NOT NULL, "guildId" TEXT NOT NULL, "channelId" TEXT NOT NULL, "message" TEXT NOT NULL, "author" TEXT NOT NULL, "avatar" TEXT NOT NULL)
