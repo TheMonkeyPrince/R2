@@ -25,7 +25,7 @@
         <h2 class="text-xl font-bold">{{ category }}</h2>
         <div class="flex flex-row flex-wrap gap-2.5">
           <div
-            v-for="sound in sounds.filter((s) => s.category === category).sort((a, b) => a.author.localeCompare(b.author))
+            v-for="sound in sounds.filter((s) => s.category === category).sort((a, b) => a.author.localeCompare(b.author))"
             :key="sound.id"
             @click="playSound(sound.id)"
             @contextmenu="(e) => rightClick(e, sound)"
