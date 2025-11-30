@@ -13,6 +13,7 @@ model Sound {
   author   String
   category String
   filename String
+  volume   Float    @default(1.0)
 }
 
 model ScheduledJob {

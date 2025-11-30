@@ -59,9 +59,22 @@ export class SoundBoardWebSocketServer {
               if (sound) {
                 logger.debug(`Playing sound ${sound.id}...`);
 
+                if (sound.volume < 0 || sound.volume > 2) {
+                  sound.volume = 1;
+                }
+                const inlineVolume = sound.volume !== 1;
+                logger.debug(`Sound volume: ${sound.volume}, inline: ${inlineVolume}`);
+
                 const resource = createAudioResource(
-                  path.join(soundsDir, sound.filename)
+                  path.join(soundsDir, sound.filename), {
+                    inlineVolume
+                  }
                 );
+
+                if (inlineVolume) {
+                  resource.volume?.setVolume(sound.volume);
+                }
+
                 audioPlayer.play(resource);
                 self.playSound(sound.id.toString());
               }

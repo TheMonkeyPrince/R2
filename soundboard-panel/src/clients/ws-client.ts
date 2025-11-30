@@ -11,7 +11,7 @@ export enum MessageType {
   DeleteSound = "DeleteSound",
 }
 
-const ws = new WebSocket("/ws");
+const ws = new WebSocket(import.meta.env.VITE_WS_URL);
 
 ws.onmessage = (event) => {
   console.log(event.data);

@@ -7,6 +7,7 @@ export interface Sound {
   author: string;
   category: string;
   filename: string;
+  volume: number;
 }
 
 export interface CreateSoundInput {
@@ -14,6 +15,7 @@ export interface CreateSoundInput {
   author: string;
   category: string;
   file: File;
+  volume: number;
 }
 
 export interface UpdateSoundInput {
@@ -21,10 +23,11 @@ export interface UpdateSoundInput {
   author?: string;
   category?: string;
   file?: File | null;
+  volume?: number;
 }
 
 const api = axios.create({
-  baseURL: '/api', // adjust this to match your server prefix
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 // CREATE
@@ -33,6 +36,7 @@ export async function createSound(data: CreateSoundInput): Promise<Sound> {
   form.append('title', data.title);
   form.append('author', data.author);
   form.append('category', data.category);
+  form.append('volume', String(data.volume));
   form.append('file', data.file);
 
   const res = await api.post<Sound>('/', form, {
@@ -47,6 +51,7 @@ export async function updateSound(id: number, data: UpdateSoundInput): Promise<S
   if (data.title !== undefined) form.append('title', data.title);
   if (data.author !== undefined) form.append('author', data.author);
   if (data.category !== undefined) form.append('category', data.category);
+  if (data.volume !== undefined) form.append('volume', String(data.volume));
   if (data.file) form.append('file', data.file);
 
   const res = await api.put<Sound>(`/${id}`, form, {

@@ -10,7 +10,7 @@ const router = express.Router();
 // CREATE sound
 router.post('/', upload.single('file'), async (req, res) => {
   try {
-    const { title, author, category } = req.body;
+    const { title, author, category, volume } = req.body;
     if (!req.file) return res.status(400).json({ error: 'Sound file is required' });
 
     const sound = await prisma.sound.create({
@@ -18,7 +18,8 @@ router.post('/', upload.single('file'), async (req, res) => {
         title,
         author,
         category,
-        filename: req.file.filename, // relative path to serve
+        filename: req.file.filename,
+        volume: volume ? Number(volume) : 1,
       },
     });
     res.json(sound);
@@ -33,7 +34,7 @@ router.post('/', upload.single('file'), async (req, res) => {
 router.put('/:id', upload.single('file'), async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, author, category } = req.body;
+    const { title, author, category, volume } = req.body;
 
     const existingSound = await prisma.sound.findUnique({ where: { id: Number(id) } });
     if (!existingSound) return res.status(404).json({ error: 'Sound not found' });
@@ -48,7 +49,7 @@ router.put('/:id', upload.single('file'), async (req, res) => {
 
     const updatedSound = await prisma.sound.update({
       where: { id: Number(id) },
-      data: { title, author, category, filename },
+      data: { title, author, category, filename, volume: volume ? Number(volume) : existingSound.volume },
     });
 
     res.json(updatedSound);

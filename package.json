@@ -5,7 +5,7 @@
   "main": "dist/app/app.js",
   "scripts": {
     "install-all": "npm install && cd soundboard-panel && npm install",
-    "build": "npx tsc && cd soundboard-panel && npm run build",
+    "build": "npx prisma generate && npx tsc && cd soundboard-panel && npm run build",
     "start": "node dist/app/app.js",
     "dev-deploy": "node dist/app/deploy.js",
     "global-deploy": "node dist/app/deploy.js global"
