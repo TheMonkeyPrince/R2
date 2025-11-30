@@ -4,7 +4,7 @@ import { APP_NAME, NODE_ENV } from "./env.js";
 const { combine, timestamp, label, printf } = format;
 
 const myFormat = printf(({ level, message, timestamp }) => {
-  return `${timestamp} ${level}: ${message}`;
+	return `${timestamp} ${level}: ${message}`;
 });
 
 const defaultFormat = format.combine(
@@ -41,14 +41,14 @@ export const logger = createLogger({
 // If we're not in production then **ALSO** log to the `console`
 // with the colorized simple format.
 //
-if (NODE_ENV === "development") {
-	logger.add(new transports.Console({
-		format: format.combine(
-			format.colorize(),
-			defaultFormat
-		)
-	}));
-}
+// if (NODE_ENV === "development") {
+logger.add(new transports.Console({
+	format: format.combine(
+		format.colorize(),
+		defaultFormat
+	)
+}));
+// }
 
 logger.info("Logger ready !")
 
