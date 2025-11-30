@@ -1,5 +1,5 @@
 import multer from 'multer';
-import path from 'path';
+import path, { extname } from 'path';
 import fs from 'fs';
 
 export const soundsDir = path.join(process.cwd(), "sounds");
@@ -19,11 +19,9 @@ export const upload = multer({
   }),
   fileFilter: (req, file, cb) => {
     // Allow only audio files
-    if (file.mimetype.startsWith('audio/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only audio files are allowed'));
-    }
+    const supportedExtensions = [".mp3", ".ogg", ".wav"]
+    const supportedMimeTypes = ["audio/mpeg", "audio/ogg", "audio/vnd.wav"]
+    cb(null, supportedExtensions.includes(extname(file.originalname).toLocaleLowerCase()) && supportedMimeTypes.includes(file.mimetype))
   },
   limits: {
     fileSize: 5 * 1024 * 1024, // 5 MB in bytes
