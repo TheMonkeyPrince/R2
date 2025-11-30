@@ -1,4 +1,3 @@
-cd soundboard-panel
-npm run build
-cd ..
+npm run build-all
 npm run global-deploy
+npm start
