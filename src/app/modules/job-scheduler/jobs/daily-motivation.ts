@@ -1,4 +1,3 @@
-import { log } from "console";
 import { JobExecutionType, JobTag } from "../../../../generated/prisma/enums.js";
 import { buildQuoteEmbed, getRandomQuote } from "../../../../lib/quote-api.js";
 import type Bot from "../../../bot.js";
