@@ -1,3 +1,3 @@
-npm run build-all
+npm run build
 npm run global-deploy
 npm start
