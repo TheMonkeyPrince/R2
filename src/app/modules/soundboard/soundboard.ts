@@ -12,7 +12,7 @@ import express from "express";
 import cors from "cors";
 
 import soundboardRouter from "./http-server.js";
-import { NODE_ENV, DEV_SOUNDBOARD_ORIGIN, SOUNDBOARD_PORT } from "../../env.js";
+import { SOUNDBOARD_ORIGIN, SOUNDBOARD_PORT } from "../../env.js";
 import { Module } from "../module.js";
 import type Bot from "../../bot.js";
 import logger from "../../logger.js";
@@ -20,7 +20,6 @@ import { SoundBoardWebSocketServer } from "./ws-server.js";
 import { soundsDir } from "./sound-upload.js";
 import type { VoiceChannel } from "discord.js";
 import type { SoundboardChannel } from "./soundboard-channel.js";
-import { channel } from "diagnostics_channel";
 
 export class Soundboard extends Module {
   public static instance: Soundboard;
@@ -46,16 +45,15 @@ export class Soundboard extends Module {
 
     const app = express();
 
-    if (NODE_ENV === "development") {
-      logger.debug(
-        `Enabling CORS for Soundboard module for origin: ${DEV_SOUNDBOARD_ORIGIN}`
-      );
-      app.use(
-        cors({
-          origin: DEV_SOUNDBOARD_ORIGIN,
-        })
-      );
-    }
+    logger.debug(
+      `Enabling CORS for Soundboard module for origin: ${SOUNDBOARD_ORIGIN}`
+    );
+    app.use(
+      cors({
+        origin: SOUNDBOARD_ORIGIN,
+      })
+    );
+
 
     app.use(express.static("soundboard-panel/dist"));
     app.use("/api", soundboardRouter);

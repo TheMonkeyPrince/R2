@@ -4,9 +4,11 @@
   "description": "",
   "main": "dist/app/app.js",
   "scripts": {
-    "start": "npx tsc && node dist/app/app.js",
-    "dev-deploy": "npx tsc && node dist/app/deploy.js",
-    "global-deploy": "npx tsc && node dist/app/deploy.js global"
+    "install-all": "npm install && cd soundboard-panel && npm install",
+    "build": "npx tsc && cd soundboard-panel && npm run build",
+    "start": "node dist/app/app.js",
+    "dev-deploy": "node dist/app/deploy.js",
+    "global-deploy": "node dist/app/deploy.js global"
   },
   "keywords": [],
   "author": "",

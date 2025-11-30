@@ -1,4 +1,4 @@
-import { Client } from "discord.js";
+import { Client, Events } from "discord.js";
 
 import intents from "../lib/discord-intents.js";
 
@@ -17,7 +17,7 @@ export default class Bot {
 
 		this.commandHandler = new CommandHandler(this)
 
-		client.once("ready", () => {
+		client.once(Events.ClientReady, () => {
 			logger.info(`Logged in as ${client.user?.tag}`)
 		})
 

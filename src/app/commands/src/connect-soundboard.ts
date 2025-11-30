@@ -3,6 +3,7 @@ import { SlashCommandBuilder } from "discord.js";
 import { Command, type Interaction } from "../command.js";
 import Bot from "../../bot.js";
 import { Soundboard } from "../../modules/soundboard/soundboard.js";
+import { SOUNDBOARD_ORIGIN } from "../../env.js";
 
 export default class ConnectSoundboard extends Command {
   override get data() {
@@ -21,7 +22,7 @@ export default class ConnectSoundboard extends Command {
       return;
     }
 
-    interaction.reply(`Connecting to ${voiceChannel.name}...`);
+    interaction.reply(`Connecting to ${voiceChannel.name}, you can access the soundboard panel at ${SOUNDBOARD_ORIGIN}`);
     Soundboard.instance.connectVoiceChannel(voiceChannel);
   }
 }
