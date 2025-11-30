@@ -1,5 +1,6 @@
 import type Bot from "../bot.js";
 import logger from "../logger.js";
+import { JobScheduler } from "./job-scheduler/job-scheduler.js";
 import type { Module } from "./module.js";
 import { Soundboard } from "./soundboard/soundboard.js";
 
@@ -7,7 +8,8 @@ type ModuleConstructor<T extends Module = Module> = new (...args: any[]) => T;
 
 export function loadModules(bot: Bot) {
   const moduleList: ModuleConstructor[] = [
-    Soundboard
+    Soundboard,
+    JobScheduler,
   ];
 
   for (const module of moduleList) {

@@ -13,18 +13,25 @@ model Sound {
   author   String
   category String
   filename String
-  volume   Float    @default(1.0)
+  volume   Float  @default(1.0)
 }
 
 model ScheduledJob {
-  id         Int    @id @default(autoincrement())
-  type       JobType
-  runAt      DateTime? // for one-time jobs
-  cronExpr   String? // for cron-based jobs
-  payload    Json
+  id            Int              @id @default(autoincrement())
+  executionType JobExecutionType
+  runAt         DateTime? // for one-time jobs
+  cronExpr      String? // for cron-based jobs
+  tag           JobTag
+  payload       String
 }
 
-enum JobType {
+enum JobExecutionType {
   ONCE
   CRON
+}
+
+enum JobTag {
+  SEND_CHANNEL_MESSAGE
+  DAILY_MOTIVATIONAL_QUOTE
+  SEND_BADMINTON_REMINDER
 }

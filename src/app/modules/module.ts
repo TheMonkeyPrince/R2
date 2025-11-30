@@ -9,5 +9,5 @@ export abstract class Module {
 		this.name = name;
 	}
 
-	abstract start(): void;
+	abstract start(): Promise<void>;
 }

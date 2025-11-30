@@ -67,7 +67,7 @@ export class Soundboard extends Module {
     );
   }
 
-  start() {
+  async start() {
     const port = SOUNDBOARD_PORT;
     this.server.listen(port, () => {
       logger.info(`SoundBoard module started on http://localhost:${port}`);
