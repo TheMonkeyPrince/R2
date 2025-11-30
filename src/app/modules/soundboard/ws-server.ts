@@ -20,6 +20,8 @@ enum MessageType {
   DeleteSound = "DeleteSound",
 }
 
+const MAX_VOLUME = 10.0;
+
 export class SoundBoardWebSocketServer {
   private readonly wss: WebSocketServer;
 
@@ -59,7 +61,7 @@ export class SoundBoardWebSocketServer {
               if (sound) {
                 logger.debug(`Playing sound ${sound.id}...`);
 
-                if (sound.volume < 0 || sound.volume > 2) {
+                if (sound.volume < 0 || sound.volume > MAX_VOLUME) {
                   sound.volume = 1;
                 }
                 const inlineVolume = sound.volume !== 1;

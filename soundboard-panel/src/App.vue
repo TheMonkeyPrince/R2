@@ -214,8 +214,8 @@
             <input
               type="range"
               min="0"
-              max="2"
-              step="0.01"
+              max="100"
+              step="0.5"
               v-model="modalForm.volume"
               class="w-full accent-blue-600"
             />
@@ -225,8 +225,9 @@
         <div class="mt-4 flex justify-between items-center">
           <!-- Left side: Reset -->
           <button
-            @click="modalForm.volume = 1"
-            class="cursor-pointer bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded"
+            @click="modalForm.volume = volumeToSlider(1)"
+           class="cursor-pointer bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-3 py-1 rounded"
+
           >
             Reset volume
           </button>
@@ -424,7 +425,7 @@ const newCategory = ref("");
 function openUploadModal() {
   modalOpen.value = true;
   editingSound.value = null;
-  Object.assign(modalForm, { title: "", author: "", category: "", volume: 1 });
+  Object.assign(modalForm, { title: "", author: "", category: "", volume: volumeToSlider(1) });
   selectedFile.value = null;
   newCategory.value = "";
 }
@@ -437,13 +438,42 @@ function openEditModal(sound: Sound) {
   modalForm.author = sound.author;
   modalForm.category = sound.category;
   selectedFile.value = null;
-  modalForm.volume = sound.volume || 1;
+  modalForm.volume = volumeToSlider(sound.volume);
   newCategory.value = "";
 }
 
 function closeModal() {
   modalOpen.value = false;
 }
+
+// Sound volume conversion between slider (0-100) and volume (0-10)
+const minVolume = 0
+const maxVolume = 10
+const centerVolume = 1
+
+function sliderToVolume(slider: number) {
+  // slider: 0-100 → volume: 0-10 with center around 1
+  const t = slider / 100 // 0-1
+  // Simple exponential curve: t^2 * (max - min) + min
+  if (t < 0.5) {
+    // Map first half to 0 → centerVolume
+    return minVolume + (centerVolume - minVolume) * (t / 0.5) ** 2
+  } else {
+    // Map second half to centerVolume → maxVolume
+    return centerVolume + (maxVolume - centerVolume) * ((t - 0.5) / 0.5) ** 2
+  }
+}
+
+function volumeToSlider(volume: number) {
+  if (volume <= centerVolume) {
+    return 50 * Math.sqrt((volume - minVolume) / (centerVolume - minVolume))
+  } else {
+    return 50 + 50 * Math.sqrt((volume - centerVolume) / (maxVolume - centerVolume))
+  }
+}
+
+// Initialize slider position
+modalForm.volume = volumeToSlider(1)
 
 // ----------------------
 // Save (Create / Update)
@@ -462,7 +492,7 @@ async function saveSound() {
       title: modalForm.title,
       author: modalForm.author,
       category: modalForm.category,
-      volume: modalForm.volume,
+      volume: sliderToVolume(modalForm.volume),
       file: selectedFile.value,
     });
   } else {
@@ -471,7 +501,7 @@ async function saveSound() {
       title: modalForm.title,
       author: modalForm.author,
       category: modalForm.category,
-      volume: modalForm.volume,
+      volume: sliderToVolume(modalForm.volume),
       file: selectedFile.value || null,
     });
   }
