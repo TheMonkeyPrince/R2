@@ -91,13 +91,6 @@ router.get('/', async (_req, res) => {
 });
 
 // GET sound file
-router.get('/file/:filename', (req, res) => {
-  const filePath = path.join(soundsDir, req.params.filename);
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ error: 'File not found' });
-  }
-});
+router.use('/file', express.static(soundsDir));
 
 export default router;
