@@ -12,6 +12,7 @@ import SendMessage from "./src/send-message.js";
 import Rename from "./src/rename.js";
 import Votation from "./src/votation.js";
 import ToggleMotivation from "./src/toggle-motivation.js";
+import Record from "./src/record.js";
 
 export default [
 	new Ping(),
@@ -26,4 +27,5 @@ export default [
 	new Rename(),
 	new Votation(),
 	new ToggleMotivation(),
+	new Record(),
 ] as Command[];

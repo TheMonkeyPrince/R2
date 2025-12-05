@@ -20,9 +20,12 @@ import { SoundBoardWebSocketServer } from "./ws-server.js";
 import { soundsDir } from "./sound-upload.js";
 import type { VoiceChannel } from "discord.js";
 import type { SoundboardChannel } from "./soundboard-channel.js";
+import { VoiceRecorder } from "../../../lib/discordjs-voice-recorder/voice-recorder.js";
 
 export class Soundboard extends Module {
   public static instance: Soundboard;
+
+  public readonly voiceRecorder: VoiceRecorder
 
   public readonly soundboardSocketServer: SoundBoardWebSocketServer;
   public readonly channelList: Map<
@@ -36,6 +39,8 @@ export class Soundboard extends Module {
   constructor(bot: Bot) {
     super(bot, "Soundboard");
     Soundboard.instance = this;
+
+    this.voiceRecorder = new VoiceRecorder();
 
     this.audioPlayer = createAudioPlayer({
       behaviors: {
@@ -100,6 +105,8 @@ export class Soundboard extends Module {
 
       this.channelList.set(voiceChannel, [connection, soundboardChannel]);
       this.soundboardSocketServer.updateChannelList(this.channels);
+
+      this.voiceRecorder.startRecording(connection);
     });
 
     connection.on(VoiceConnectionStatus.Disconnected, () => {
@@ -109,6 +116,8 @@ export class Soundboard extends Module {
 
       this.channelList.delete(voiceChannel);
       this.soundboardSocketServer.updateChannelList(this.channels);
+
+      this.voiceRecorder.stopRecording(connection);
     });
   }
 
