@@ -18,9 +18,10 @@ import type Bot from "../../bot.js";
 import logger from "../../logger.js";
 import { SoundBoardWebSocketServer } from "./ws-server.js";
 import { soundsDir } from "./sound-upload.js";
-import type { VoiceChannel } from "discord.js";
-import type { SoundboardChannel } from "./soundboard-channel.js";
+import type { Guild, VoiceChannel } from "discord.js";
+import type { SoundboardChannel, SoundBoardConnection } from "./soundboard-channel.js";
 import { VoiceRecorder } from "../../../lib/discordjs-voice-recorder/voice-recorder.js";
+
 
 export class Soundboard extends Module {
   public static instance: Soundboard;
@@ -28,10 +29,7 @@ export class Soundboard extends Module {
   public readonly voiceRecorder: VoiceRecorder
 
   public readonly soundboardSocketServer: SoundBoardWebSocketServer;
-  public readonly channelList: Map<
-    VoiceChannel,
-    [VoiceConnection, SoundboardChannel]
-  > = new Map();
+  public readonly channelMap: Map<Guild, SoundBoardConnection> = new Map();
 
   public readonly audioPlayer: AudioPlayer;
   private readonly server: http.Server;
@@ -40,7 +38,10 @@ export class Soundboard extends Module {
     super(bot, "Soundboard");
     Soundboard.instance = this;
 
-    this.voiceRecorder = new VoiceRecorder();
+    this.voiceRecorder = new VoiceRecorder({
+      maxUserRecordingLength: 10, // 10 MB;
+      maxRecordTimeMinutes: 10, // 10 minutes
+    }, bot.client);
 
     this.audioPlayer = createAudioPlayer({
       behaviors: {
@@ -79,59 +80,91 @@ export class Soundboard extends Module {
     });
   }
 
-  connectVoiceChannel(voiceChannel: VoiceChannel) {
+  async connectToVoiceChannel(target: VoiceChannel) {
+    const oldConnection = this.channelMap.get(target.guild);
+    if (oldConnection) {
+      logger.debug(
+        `Already connected to a voice channel in guild ${target.guild.name}, disconnecting from the old channel first.`
+      );
+      await this.disconnectFromGuild(target.guild.id);
+    }
+
     const connection = joinVoiceChannel({
-      channelId: voiceChannel.id,
-      guildId: voiceChannel.guild.id,
-      adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+      channelId: target.id,
+      guildId: target.guild.id,
+      adapterCreator: target.guild.voiceAdapterCreator,
+      selfDeaf: false,
+      selfMute: false,
     });
 
-    connection.on(VoiceConnectionStatus.Ready, () => {
-      logger.debug(
-        `Soundboard connected to voice channel: ${voiceChannel.name}`
-      );
+    const guild = target.guild;
+    let connectedChannel: VoiceChannel | null = null;
+
+    connection.on(VoiceConnectionStatus.Ready, async () => {
+      connectedChannel = await guild.channels.fetch(connection.joinConfig.channelId!) as VoiceChannel;
+      connection.joinConfig.channelId = ""; // Prevents reconnection attempts
+      logger.debug(`[Ready] Connected to voice channel: ${connectedChannel!.name}`);
+
       connection.subscribe(this.audioPlayer);
 
-      const soundboardChannel: SoundboardChannel = {
-        guildId: voiceChannel.guild.id,
-        guildName: voiceChannel.guild.name,
-        channelId: voiceChannel.id,
-        channelName: voiceChannel.name,
-        guildIcon:
-          voiceChannel.guild.iconURL({
-            extension: "png",
-          }) || "",
-      };
-
-      this.channelList.set(voiceChannel, [connection, soundboardChannel]);
+      this.channelMap.set(guild, {
+        voiceConnection: connection,
+        voiceChannel: connectedChannel!
+      })
       this.soundboardSocketServer.updateChannelList(this.channels);
 
       this.voiceRecorder.startRecording(connection);
     });
 
     connection.on(VoiceConnectionStatus.Disconnected, () => {
-      logger.debug(
-        `Soundboard disconnected from voice channel: ${voiceChannel.name}`
-      );
+      if (connectedChannel) {
+        logger.debug(`[Disconnected] Disconnected from voice channel: ${connectedChannel.name}`);
+      } else {
+        logger.debug(`[Disconnected] Disconnected from voice channel: Unknown`);
+      }
+      connectedChannel = null;
+      this.disconnectFromGuild(guild.id);
+    });
 
-      this.channelList.delete(voiceChannel);
-      this.soundboardSocketServer.updateChannelList(this.channels);
+    connection.on(VoiceConnectionStatus.Destroyed, () => {
+      connectedChannel = null;
+      logger.debug(`[Disconnected] Voice connection destroyed`);
+      this.disconnectFromGuild(guild.id);
+    });
 
-      this.voiceRecorder.stopRecording(connection);
+    connection.on(VoiceConnectionStatus.Signalling, () => {
+      connectedChannel = null;
+      logger.debug(`[Signalling] Voice connection signalling`);
+      this.disconnectFromGuild(guild.id);
     });
   }
 
-  disconnectVoiceChannel(guildId: string, channelId: string) {
-    const voiceChannel = this.bot.client.guilds.cache
-      .get(guildId)
-      ?.channels.cache.get(channelId) as VoiceChannel | undefined;
+  async disconnectFromGuild(guildId: string) {
+    const guild = await this.bot.client.guilds.fetch(guildId);
+    const connectionInfo = this.channelMap.get(guild);
+    if (!connectionInfo) return;
 
-    if (voiceChannel) {
-      this.channelList.get(voiceChannel)?.[0].disconnect();
-    }
+    this.voiceRecorder.stopRecording(connectionInfo.voiceConnection);
+    connectionInfo.voiceConnection.removeAllListeners();
+    connectionInfo.voiceConnection.destroy();
+
+    this.channelMap.delete(guild);
+    this.soundboardSocketServer.updateChannelList(this.channels);
   }
 
   get channels(): SoundboardChannel[] {
-    return Array.from(this.channelList.values()).map(([_, channel]) => channel);
+    return Array.from(this.channelMap.values()).map(connectionInfo => {
+      const channel = connectionInfo.voiceChannel;
+      return {
+        guildId: channel.guild.id,
+        guildName: channel.guild.name,
+        guildIcon:
+          channel.guild.iconURL({
+            extension: "png",
+          }) || "",
+        channelId: channel.id,
+        channelName: channel.name,
+      };
+    });
   }
 }

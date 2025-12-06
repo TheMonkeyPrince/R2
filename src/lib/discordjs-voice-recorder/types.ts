@@ -4,7 +4,10 @@ import { ReplayReadable } from './replay-readable.js';
 import type { WritableOptions } from 'stream';
 
 export type ReadWriteOptions = { length?: number } & WritableOptions;
-export type AudioExportType = 'single' | 'separate';
+export enum AudioExportType {
+    SINGLE,
+    SEPARATE
+}
 export type UserVolumesDict = Record<string, number | undefined>;
 export type RecordOptions = {
     /**

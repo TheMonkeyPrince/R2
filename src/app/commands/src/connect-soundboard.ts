@@ -23,6 +23,6 @@ export default class ConnectSoundboard extends Command {
     }
 
     interaction.reply(`Connecting to ${voiceChannel.name}, you can access the soundboard panel at ${SOUNDBOARD_ORIGIN}`);
-    Soundboard.instance.connectVoiceChannel(voiceChannel);
+    Soundboard.instance.connectToVoiceChannel(voiceChannel);
   }
 }

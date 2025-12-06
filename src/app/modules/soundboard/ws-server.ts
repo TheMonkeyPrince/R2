@@ -47,10 +47,7 @@ export class SoundBoardWebSocketServer {
         switch (message.type) {
           case MessageType.DisonnectChannel:
             if (message.guildId && message.channelId) {
-              Soundboard.instance.disconnectVoiceChannel(
-                message.guildId,
-                message.channelId
-              );
+              Soundboard.instance.disconnectFromGuild(message.guildId);
             }
 
           case MessageType.PlaySound:
@@ -69,8 +66,8 @@ export class SoundBoardWebSocketServer {
 
                 const resource = createAudioResource(
                   path.join(soundsDir, sound.filename), {
-                    inlineVolume
-                  }
+                  inlineVolume
+                }
                 );
 
                 if (inlineVolume) {

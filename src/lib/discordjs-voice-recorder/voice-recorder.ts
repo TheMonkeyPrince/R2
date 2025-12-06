@@ -4,7 +4,7 @@ import ffmpeg from 'fluent-ffmpeg';
 
 import { resolve } from 'path';
 import { ReplayReadable } from './replay-readable.js';
-import type { AudioExportType, DiscordClientInterface, RecordOptions, SocketServerConfig, UserStreams, UserVolumesDict } from './types.js';
+import { AudioExportType, type DiscordClientInterface, type RecordOptions, type SocketServerConfig, type UserStreams, type UserVolumesDict } from './types.js';
 import { PassThrough, Readable, Writable } from 'stream';
 import * as net from 'net';
 import { Server } from 'net';
@@ -138,7 +138,7 @@ export class VoiceRecorder {
      * @param minutes Determines how many minutes (max is options.maxRecordTimeMs/1_000/60)
      * @param userVolumes User dict {[userId]: number} that determines the volume for a user. Default 100 per user (100%)
      */
-    public async getRecordedVoice<T extends Writable>(writeStream: T, guildId: string, exportType: AudioExportType = 'single', minutes = 10, userVolumes: UserVolumesDict = {}): Promise<boolean> {
+    public async getRecordedVoice<T extends Writable>(writeStream: T, guildId: string, exportType: AudioExportType = AudioExportType.SINGLE, minutes = 10, userVolumes: UserVolumesDict = {}): Promise<boolean> {
         const serverStream = this.writeStreams[guildId];
         if (!serverStream) {
             console.warn(`server with id ${guildId} does not have any streams`, 'Record voice');
@@ -154,7 +154,7 @@ export class VoiceRecorder {
         const endTimeMs = Date.now();
         const maxRecordTime = endTimeMs - recordDurationMs;
         const startRecordTime = Math.max(minStartTimeMs, maxRecordTime);
-        const recordMethod = (exportType === 'single' ? this.generateMergedRecording : this.generateSplitRecording).bind(this);
+        const recordMethod = (exportType === AudioExportType.SINGLE ? this.generateMergedRecording : this.generateSplitRecording).bind(this);
 
         return recordMethod(serverStream.userStreams, startRecordTime, endTimeMs, writeStream, userVolumes);
     }
@@ -166,7 +166,7 @@ export class VoiceRecorder {
      * @param minutes Determines how many minutes (max is options.maxRecordTimeMs/1_000/60)
      * @param userVolumes User dict {[userId]: number} that determines the volume for a user. Default 100 per user (100%)
      */
-    public async getRecordedVoiceAsBuffer(guildId: string, exportType: AudioExportType = 'single', minutes = 10, userVolumes: UserVolumesDict = {}): Promise<Buffer> {
+    public async getRecordedVoiceAsBuffer(guildId: string, exportType: AudioExportType = AudioExportType.SINGLE, minutes = 10, userVolumes: UserVolumesDict = {}): Promise<Buffer> {
         const bufferStream = new PassThrough();
         const buffers: Buffer[] = [];
         const bufferPromise = new Promise((resolve) => {
@@ -193,7 +193,7 @@ export class VoiceRecorder {
      * @param minutes Determines how many minutes (max is options.maxRecordTimeMs/1_000/60)
      * @param userVolumes User dict {[userId]: number} that determines the volume for a user. Default 100 per user (100%)
      */
-    public getRecordedVoiceAsReadable(guildId: string, exportType: AudioExportType = 'single', minutes = 10, userVolumes: UserVolumesDict = {}): Readable {
+    public getRecordedVoiceAsReadable(guildId: string, exportType: AudioExportType = AudioExportType.SINGLE, minutes = 10, userVolumes: UserVolumesDict = {}): Readable {
         const passThrough = new PassThrough({allowHalfOpen: true});
         void this.getRecordedVoice(passThrough, guildId, exportType, minutes, userVolumes);
         return passThrough;
@@ -228,9 +228,10 @@ export class VoiceRecorder {
         for (const userId of userIds) {
             //eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const passThroughStream = this.getUserRecordingStream(userStreams[userId]!.out.rewind(startRecordTime, endTime), userId, userVolumes);
-            const username = await this.getUsername(userId);
+            const username = (await this.getUsername(userId))?.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const filename = username ? `${userId}_${username}` : userId;
             archive.append(passThroughStream, {
-                name: `${username}.mp3`
+                name: `${filename}.mp3`
             });
         }
 
@@ -243,7 +244,7 @@ export class VoiceRecorder {
         });
     }
 
-    private async getUsername(userId: string): Promise<string> {
+    private async getUsername(userId: string): Promise<string | null> {
         if (this.discordClient) {
             try {
                 const { username } = await this.discordClient.users.fetch(userId);
@@ -252,7 +253,7 @@ export class VoiceRecorder {
                 console.error(`Username of userId: ${userId} can't be fetched!`, error);
             }
         }
-        return userId;
+        return null;
     }
 
     private getUserRecordingStream(stream: Readable, userId: string, userVolumes?: UserVolumesDict): PassThrough {
