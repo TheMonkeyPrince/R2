@@ -11,6 +11,7 @@ import { Server } from 'net';
 import { randomUUID } from 'crypto';
 import archiver from 'archiver';
 import { platform, tmpdir } from 'os';
+import logger from '../../app/logger.js';
 
 
 export class VoiceRecorder {
@@ -42,7 +43,7 @@ export class VoiceRecorder {
      * @param guildId
      */
     public isRecording(guildId?: string): boolean {
-        if(guildId) {
+        if (guildId) {
             return !!this.writeStreams[guildId];
         }
         return !!Object.keys(this.writeStreams).length;
@@ -54,8 +55,13 @@ export class VoiceRecorder {
             return;
         }
         const listener = (userId: string) => {
-            const streams:  {source: AudioReceiveStream, out: ReplayReadable} | undefined = this.writeStreams[guildId]?.userStreams[userId];
-            if(streams) {
+            const streams: { source: AudioReceiveStream, out: ReplayReadable } | undefined = this.writeStreams[guildId]?.userStreams[userId];
+            if (streams) {
+                if (streams.source.destroyed) { // stream was destroyed, recreate
+                    logger.debug(`Recreating destroyed recording stream for user ${userId} in guild ${guildId}`);
+                    const opusStream = this.subscribeToOpusStream(connection, streams.out, userId);
+                    streams.source = opusStream;
+                }
                 // already listening
                 return;
             }
@@ -70,14 +76,21 @@ export class VoiceRecorder {
 
     private startRecordStreamOfUser(guildId: string, userId: string, connection: VoiceConnection): void {
         const serverStream = this.writeStreams[guildId];
-        if(!serverStream) {
+        if (!serverStream) {
             return;
         }
 
-        const recordStream = new ReplayReadable(this.options.maxRecordTimeMinutes, this.options.sampleRate, this.options.channelCount, ()=>  connection.receiver.speaking.users.get(userId), {
+        const recordStream = new ReplayReadable(this.options.maxRecordTimeMinutes, this.options.sampleRate, this.options.channelCount, () => connection.receiver.speaking.users.get(userId), {
             highWaterMark: this.options.maxUserRecordingLength,
             length: this.options.maxUserRecordingLength
         });
+
+        const opusStream = this.subscribeToOpusStream(connection, recordStream, userId);
+
+        serverStream.userStreams[userId] = { out: recordStream, source: opusStream };
+    }
+
+    private subscribeToOpusStream(connection: VoiceConnection, recordStream: ReplayReadable, userId: string): AudioReceiveStream {
         const opusStream = connection.receiver.subscribe(userId, {
             end: {
                 behavior: EndBehaviorType.AfterSilence,
@@ -86,16 +99,17 @@ export class VoiceRecorder {
         });
 
         opusStream.on('error', (error: Error) => {
-            console.error(error, `Error while recording voice for user ${userId} in server: ${guildId}`);
+            logger.error(`Error in recording stream for user ${userId} in guild ${connection.joinConfig.guildId}:`);
+            console.error(error);
+            if (!opusStream.destroyed) opusStream.destroy()
         });
 
         opusStream.on('end', () => {
-            this.stopUserRecording(guildId, userId);
+            this.stopUserRecording(connection.joinConfig.guildId, userId);
         });
 
-        opusStream.pipe(recordStream, {end: false});
-
-        serverStream.userStreams[userId] = { out: recordStream, source: opusStream };
+        opusStream.pipe(recordStream, { end: false });
+        return opusStream
     }
 
     /**
@@ -105,7 +119,7 @@ export class VoiceRecorder {
     public stopRecording(connection: VoiceConnection): void {
         const guildId = connection.joinConfig.guildId;
         const serverStreams = this.writeStreams[guildId];
-        if(!serverStreams) {
+        if (!serverStreams) {
             return;
         }
         connection.receiver.speaking.removeListener('start', serverStreams.listener);
@@ -118,11 +132,11 @@ export class VoiceRecorder {
 
     private stopUserRecording(guildId: string, userId: string): void {
         const serverStreams = this.writeStreams[guildId];
-        if(!serverStreams) {
+        if (!serverStreams) {
             return;
         }
         const userStream = serverStreams.userStreams[userId];
-        if(!userStream) {
+        if (!userStream) {
             return;
         }
         userStream.source.destroy();
@@ -179,7 +193,7 @@ export class VoiceRecorder {
         });
 
         const result = await this.getRecordedVoice(bufferStream, guildId, exportType, minutes, userVolumes);
-        if(!result) {
+        if (!result) {
             return Buffer.from([]);
         }
         await bufferPromise;
@@ -194,14 +208,14 @@ export class VoiceRecorder {
      * @param userVolumes User dict {[userId]: number} that determines the volume for a user. Default 100 per user (100%)
      */
     public getRecordedVoiceAsReadable(guildId: string, exportType: AudioExportType = AudioExportType.SINGLE, minutes = 10, userVolumes: UserVolumesDict = {}): Readable {
-        const passThrough = new PassThrough({allowHalfOpen: true});
+        const passThrough = new PassThrough({ allowHalfOpen: true });
         void this.getRecordedVoice(passThrough, guildId, exportType, minutes, userVolumes);
         return passThrough;
     }
 
     private generateMergedRecording(userStreams: UserStreams, startRecordTime: number, endTime: number, writeStream: Writable, userVolumes?: UserVolumesDict): Promise<boolean> {
         return new Promise((resolve, reject) => {
-            const {command, openServers} = this.getFfmpegSpecs(userStreams, startRecordTime, endTime, userVolumes);
+            const { command, openServers } = this.getFfmpegSpecs(userStreams, startRecordTime, endTime, userVolumes);
             if (!openServers.length) {
                 return resolve(false);
             }
@@ -215,7 +229,7 @@ export class VoiceRecorder {
                     reject(error);
                 })
                 .outputFormat('mp3')
-                .writeToStream(writeStream, {end: true});
+                .writeToStream(writeStream, { end: true });
         });
     }
 
@@ -239,7 +253,7 @@ export class VoiceRecorder {
             archive
                 .on('end', () => resolve(true))
                 .on('error', reject)
-                .pipe(writeStream, {end: true});
+                .pipe(writeStream, { end: true });
             archive.finalize();
         });
     }
@@ -257,7 +271,7 @@ export class VoiceRecorder {
     }
 
     private getUserRecordingStream(stream: Readable, userId: string, userVolumes?: UserVolumesDict): PassThrough {
-        const passThroughStream = new PassThrough({allowHalfOpen: false});
+        const passThroughStream = new PassThrough({ allowHalfOpen: false });
 
         ffmpeg(stream)
             .inputOptions(this.getRecordInputOptions())
@@ -269,7 +283,7 @@ export class VoiceRecorder {
             ]
             )
             .outputFormat('mp3')
-            .output(passThroughStream, {end: true})
+            .output(passThroughStream, { end: true })
             .run();
         return passThroughStream;
     }
@@ -304,7 +318,7 @@ export class VoiceRecorder {
             const stream = streams[userId]!.out;
             try {
                 const output = `[s${volumeFilter.length}]`;
-                const {server, url} = this.serveStream(stream, startRecordTime, endTimeMs);
+                const { server, url } = this.serveStream(stream, startRecordTime, endTimeMs);
 
                 ffmpegOptions = ffmpegOptions
                     .addInput(url)
@@ -342,7 +356,7 @@ export class VoiceRecorder {
     private serveStream(stream: ReplayReadable, startRecordTime: number, endTimeMs: number): SocketServerConfig {
         let socketPath: string, url: string;
 
-        if(platform() === 'win32') {
+        if (platform() === 'win32') {
             socketPath = url = `\\\\.\\pipe\\${randomUUID()}`;
         } else {
             socketPath = resolve(VoiceRecorder.tempPath, `${randomUUID()}.sock`);

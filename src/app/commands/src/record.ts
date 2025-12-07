@@ -38,9 +38,13 @@ export default class Record extends Command {
 			return;
 		}
 
+		// banana(soundBoardConnection.voiceConnection, interaction.member!.user.id);
+		// interaction.reply(`Started recording your audio for up to ${durationInMinutes} minute(s).`);
+
 		await interaction.deferReply();
 
 		logger.debug(`Getting last ${durationInMinutes} recorded minute(s) in guild ${interaction.guild.name}`);
+
 
 		const mp3Attachment = new AttachmentBuilder(
 			await Soundboard.instance.voiceRecorder.getRecordedVoiceAsBuffer(commandChannel.guildId, AudioExportType.SINGLE, durationInMinutes), {

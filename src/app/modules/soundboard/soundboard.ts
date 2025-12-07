@@ -101,6 +101,7 @@ export class Soundboard extends Module {
     let connectedChannel: VoiceChannel | null = null;
 
     connection.on(VoiceConnectionStatus.Ready, async () => {
+      if (connectedChannel) return; // Already connected
       connectedChannel = await guild.channels.fetch(connection.joinConfig.channelId!) as VoiceChannel;
       connection.joinConfig.channelId = ""; // Prevents reconnection attempts
       logger.debug(`[Ready] Connected to voice channel: ${connectedChannel!.name}`);
