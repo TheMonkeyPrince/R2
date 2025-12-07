@@ -3,7 +3,7 @@
     class="select-none min-h-screen bg-gray-900 text-gray-100 font-sans flex flex-col"
   >
     <header
-      class="p-4 border-b border-gray-700 flex justify-between items-center"
+      class="p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 bg-gray-900"
     >
       <h1 class="text-2xl font-bold">Soundboard</h1>
       <div class="flex gap-2">
@@ -16,7 +16,7 @@
       </div>
     </header>
 
-    <main>
+    <main class="flex-1 overflow-y-auto pb-30">
       <div
         class="px-6 pt-6 flex flex-col w-full gap-2"
         v-for="category in categories"
@@ -25,7 +25,9 @@
         <h2 class="text-xl font-bold">{{ category }}</h2>
         <div class="flex flex-row flex-wrap gap-2.5">
           <div
-            v-for="sound in sounds.filter((s) => s.category === category).sort((a, b) => a.author.localeCompare(b.author))"
+            v-for="sound in sounds
+              .filter((s) => s.category === category)
+              .sort((a, b) => a.author.localeCompare(b.author))"
             :key="sound.id"
             @click="playSound(sound.id)"
             @contextmenu="(e) => rightClick(e, sound)"
@@ -226,8 +228,7 @@
           <!-- Left side: Reset -->
           <button
             @click="modalForm.volume = volumeToSlider(1)"
-           class="cursor-pointer bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-3 py-1 rounded"
-
+            class="cursor-pointer bg-yellow-400 hover:bg-yellow-500 text-gray-800 px-3 py-1 rounded"
           >
             Reset volume
           </button>
@@ -425,7 +426,12 @@ const newCategory = ref("");
 function openUploadModal() {
   modalOpen.value = true;
   editingSound.value = null;
-  Object.assign(modalForm, { title: "", author: "", category: "", volume: volumeToSlider(1) });
+  Object.assign(modalForm, {
+    title: "",
+    author: "",
+    category: "",
+    volume: volumeToSlider(1),
+  });
   selectedFile.value = null;
   newCategory.value = "";
 }
@@ -447,33 +453,35 @@ function closeModal() {
 }
 
 // Sound volume conversion between slider (0-100) and volume (0-10)
-const minVolume = 0
-const maxVolume = 10
-const centerVolume = 1
+const minVolume = 0;
+const maxVolume = 10;
+const centerVolume = 1;
 
 function sliderToVolume(slider: number) {
   // slider: 0-100 → volume: 0-10 with center around 1
-  const t = slider / 100 // 0-1
+  const t = slider / 100; // 0-1
   // Simple exponential curve: t^2 * (max - min) + min
   if (t < 0.5) {
     // Map first half to 0 → centerVolume
-    return minVolume + (centerVolume - minVolume) * (t / 0.5) ** 2
+    return minVolume + (centerVolume - minVolume) * (t / 0.5) ** 2;
   } else {
     // Map second half to centerVolume → maxVolume
-    return centerVolume + (maxVolume - centerVolume) * ((t - 0.5) / 0.5) ** 2
+    return centerVolume + (maxVolume - centerVolume) * ((t - 0.5) / 0.5) ** 2;
   }
 }
 
 function volumeToSlider(volume: number) {
   if (volume <= centerVolume) {
-    return 50 * Math.sqrt((volume - minVolume) / (centerVolume - minVolume))
+    return 50 * Math.sqrt((volume - minVolume) / (centerVolume - minVolume));
   } else {
-    return 50 + 50 * Math.sqrt((volume - centerVolume) / (maxVolume - centerVolume))
+    return (
+      50 + 50 * Math.sqrt((volume - centerVolume) / (maxVolume - centerVolume))
+    );
   }
 }
 
 // Initialize slider position
-modalForm.volume = volumeToSlider(1)
+modalForm.volume = volumeToSlider(1);
 
 // ----------------------
 // Save (Create / Update)
