@@ -1,6 +1,6 @@
 <template>
   <div
-    class="select-none min-h-screen bg-gray-900 text-gray-100 font-sans flex flex-col"
+    class="select-none h-screen overflow-hidden bg-gray-900 text-gray-100 font-sans flex flex-col"
   >
     <header
       class="p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 bg-gray-900"
