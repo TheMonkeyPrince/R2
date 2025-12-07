@@ -5,7 +5,42 @@
     <header
       class="p-4 border-b border-gray-700 flex justify-between items-center sticky top-0 z-40 bg-gray-900"
     >
-      <h1 class="text-2xl font-bold">Soundboard</h1>
+      <!-- Left: Title + Search -->
+      <div class="flex items-center gap-4">
+        <h1 class="text-2xl font-bold">Soundboard</h1>
+
+        <!-- Search bar -->
+        <div class="relative">
+          <svg
+            class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+          </svg>
+
+          <input
+            v-model="searchQuery"
+            @click.stop
+            placeholder="Search sounds, authors, categories..."
+            class="w-96 pl-10 pr-8 p-2 rounded-lg bg-gray-800 text-gray-100 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-600"
+            aria-label="Search sounds"
+          />
+
+          <button
+            v-if="searchQuery"
+            @click="searchQuery = ''"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-100"
+            aria-label="Clear search"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div class="flex gap-2">
         <button
           @click="openUploadModal"
@@ -25,7 +60,7 @@
         <h2 class="text-xl font-bold">{{ category }}</h2>
         <div class="flex flex-row flex-wrap gap-2.5">
           <div
-            v-for="sound in sounds
+            v-for="sound in filteredSounds
               .filter((s) => s.category === category)
               .sort((a, b) => a.author.localeCompare(b.author))"
             :key="sound.id"
@@ -349,6 +384,11 @@ import {
 import type { SoundboardChannel } from "./types/soundboard-channel";
 
 // ----------------------
+// Search
+// ----------------------
+const searchQuery = ref("");
+
+// ----------------------
 // Channel list
 // ----------------------
 const soundboardChannels = ref<SoundboardChannel[]>([]);
@@ -375,11 +415,23 @@ async function loadSounds() {
 
 onMounted(loadSounds);
 
+// filteredSounds respects the search query
+const filteredSounds = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return sounds.value;
+  return sounds.value.filter((s) => {
+    const title = s.title?.toLowerCase() ?? "";
+    const author = s.author?.toLowerCase() ?? "";
+    const category = s.category?.toLowerCase() ?? "";
+    return title.includes(q) || author.includes(q) || category.includes(q);
+  });
+});
+
 const categories = computed(() => {
-  const allCategories = sounds.value.map((s) => s.category);
+  const allCategories = filteredSounds.value.map((s) => s.category);
   const uniqueCategories = Array.from(new Set(allCategories));
 
-  // Move "banaa" to the front if it exists
+  // Move "" to the front if it exists
   const index = uniqueCategories.indexOf("");
   if (index > -1) {
     uniqueCategories.splice(index, 1);
