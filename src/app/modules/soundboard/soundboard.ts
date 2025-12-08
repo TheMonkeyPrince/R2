@@ -41,6 +41,7 @@ export class Soundboard extends Module {
     this.voiceRecorder = new VoiceRecorder({
       maxUserRecordingLength: 10, // 10 MB;
       maxRecordTimeMinutes: 10, // 10 minutes
+      sampleRate: 48000
     }, bot.client);
 
     this.audioPlayer = createAudioPlayer({
