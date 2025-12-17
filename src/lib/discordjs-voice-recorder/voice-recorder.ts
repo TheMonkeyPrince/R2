@@ -56,15 +56,7 @@ export class VoiceRecorder {
         }
         const listener = (userId: string) => {
             const streams: { source: AudioReceiveStream, out: ReplayReadable } | undefined = this.writeStreams[guildId]?.userStreams[userId];
-            if (streams) {
-                if (streams.source.destroyed) { // stream was destroyed, recreate
-                    logger.debug(`Recreating destroyed recording stream for user ${userId} in guild ${guildId}`);
-                    const opusStream = this.subscribeToOpusStream(connection, streams.out, userId);
-                    streams.source = opusStream;
-                }
-                // already listening
-                return;
-            }
+            if (streams) return; // already recording this user
             this.startRecordStreamOfUser(guildId, userId, connection);
         }
         this.writeStreams[guildId] = {
@@ -101,7 +93,7 @@ export class VoiceRecorder {
         opusStream.on('error', (error: Error) => {
             logger.error(`Error in recording stream for user ${userId} in guild ${connection.joinConfig.guildId}:`);
             console.error(error);
-            if (!opusStream.destroyed) opusStream.destroy()
+            this.stopUserRecording(connection.joinConfig.guildId, userId);
         });
 
         opusStream.on('end', () => {
