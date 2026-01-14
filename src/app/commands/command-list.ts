@@ -13,6 +13,7 @@ import Rename from "./src/rename.js";
 import Votation from "./src/votation.js";
 import ToggleMotivation from "./src/toggle-motivation.js";
 import Record from "./src/record.js";
+import TrackJuan from "./src/track-juan.js";
 
 export default [
 	new Ping(),
@@ -28,4 +29,5 @@ export default [
 	new Votation(),
 	new ToggleMotivation(),
 	new Record(),
+	new TrackJuan(),
 ] as Command[];
