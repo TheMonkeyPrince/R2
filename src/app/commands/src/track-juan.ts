@@ -76,7 +76,7 @@ export default class TrackJuan extends Command {
         const gameName = entry.game ?? "Unknown Game";
         embed.addFields({
           name: gameName,
-          value: `Last Played: ${entry.last_played}\nTime Played: ${entry.time_played}`,
+          value: `Whaaaaat`,
         });
       });
     }
