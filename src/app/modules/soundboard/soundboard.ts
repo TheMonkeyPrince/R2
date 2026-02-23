@@ -1,5 +1,6 @@
 import {
   createAudioPlayer,
+  entersState,
   joinVoiceChannel,
   NoSubscriberBehavior,
   VoiceConnection,
@@ -81,15 +82,8 @@ export class Soundboard extends Module {
     });
   }
 
-  async connectToVoiceChannel(target: VoiceChannel) {
-    const oldConnection = this.channelMap.get(target.guild);
-    if (oldConnection) {
-      logger.debug(
-        `Already connected to a voice channel in guild ${target.guild.name}, disconnecting from the old channel first.`
-      );
-      await this.disconnectFromGuild(target.guild.id);
-    }
 
+  async connectToVoiceChannel(target: VoiceChannel) {
     const connection = joinVoiceChannel({
       channelId: target.id,
       guildId: target.guild.id,
@@ -98,16 +92,21 @@ export class Soundboard extends Module {
       selfMute: false,
     });
 
+    connection.subscribe(this.audioPlayer);
+
     const guild = target.guild;
     let connectedChannel: VoiceChannel | null = null;
 
     connection.on(VoiceConnectionStatus.Ready, async () => {
-      if (connectedChannel) return; // Already connected
-      connectedChannel = await guild.channels.fetch(connection.joinConfig.channelId!) as VoiceChannel;
-      connection.joinConfig.channelId = ""; // Prevents reconnection attempts
-      logger.debug(`[Ready] Connected to voice channel: ${connectedChannel!.name}`);
+      const newConnectedChannel = await guild.channels.fetch(connection.joinConfig.channelId!) as VoiceChannel;
+      if (connectedChannel && connectedChannel.id === newConnectedChannel.id) {
+        logger.debug("[Ready] Reconnected to same channel, that's weird. Disconnecting...");
+        this.disconnectFromGuild(guild.id);
+        return;
+      }
 
-      connection.subscribe(this.audioPlayer);
+      connectedChannel = newConnectedChannel;
+      logger.debug(`[Ready] Connected to voice channel: ${connectedChannel.name}`);
 
       this.channelMap.set(guild, {
         voiceConnection: connection,
@@ -118,26 +117,25 @@ export class Soundboard extends Module {
       this.voiceRecorder.startRecording(connection);
     });
 
-    connection.on(VoiceConnectionStatus.Disconnected, () => {
-      if (connectedChannel) {
-        logger.debug(`[Disconnected] Disconnected from voice channel: ${connectedChannel.name}`);
-      } else {
-        logger.debug(`[Disconnected] Disconnected from voice channel: Unknown`);
+
+    connection.on(VoiceConnectionStatus.Disconnected, async (oldState, newState) => {
+      try {
+        await Promise.race([
+          entersState(connection, VoiceConnectionStatus.Signalling, 1_000),
+          entersState(connection, VoiceConnectionStatus.Connecting, 1_000),
+          entersState(connection, VoiceConnectionStatus.Ready, 1_000),
+        ]);
+        // Seems to be reconnecting to a new channel - ignore disconnect
+        if (connection.joinConfig.channelId !== connectedChannel?.id) { // Channel switch
+          logger.debug(`[Channel Switch] Disconnected from ${connectedChannel?.name || "Unknown"}, connecting to new channel...`);
+        } else {
+          logger.debug(`[Reconnecting] Attempting to reconnect to voice channel: ${connectedChannel?.name || "Unknown"}`);
+        }
+      } catch {
+        // Seems to be a real disconnect which SHOULDN'T be recovered from
+        logger.debug(`[Disconnected] Disconnected from voice channel: ${connectedChannel?.name || "Unknown"}`);
+        this.disconnectFromGuild(guild.id);
       }
-      connectedChannel = null;
-      this.disconnectFromGuild(guild.id);
-    });
-
-    connection.on(VoiceConnectionStatus.Destroyed, () => {
-      connectedChannel = null;
-      logger.debug(`[Disconnected] Voice connection destroyed`);
-      this.disconnectFromGuild(guild.id);
-    });
-
-    connection.on(VoiceConnectionStatus.Signalling, () => {
-      connectedChannel = null;
-      logger.debug(`[Signalling] Voice connection signalling`);
-      this.disconnectFromGuild(guild.id);
     });
   }
 
