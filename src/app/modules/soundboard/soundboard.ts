@@ -40,9 +40,9 @@ export class Soundboard extends Module {
     Soundboard.instance = this;
 
     this.voiceRecorder = new VoiceRecorder({
-      maxUserRecordingLength: 10, // 10 MB;
+      maxUserRecordingLength: 100, // 10 MB;
       maxRecordTimeMinutes: 10, // 10 minutes
-      sampleRate: 48000
+      sampleRate: 48_000
     }, bot.client);
 
     this.audioPlayer = createAudioPlayer({
