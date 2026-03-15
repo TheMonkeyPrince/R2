@@ -1,0 +1,39 @@
+services:
+  nginx:
+    build: ./nginx
+    container_name: r2-nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - r2-bot
+      - r2-soundboard
+    networks:
+      - r2-net
+
+  r2-bot:
+    build:
+      context: ./bot
+      args:
+        DATABASE_URL: ./bot/${DATABASE_URL}
+    container_name: r2-bot
+    restart: on-failure:5
+    volumes:
+      - ./sounds:/usr/src/app/sounds
+      - ./bot/prisma:/usr/src/app/prisma
+    environment:
+      - NODE_ENV=production
+    env_file: "./bot/.env"
+    depends_on:
+      - r2-soundboard
+    networks:
+      - r2-net
+
+  r2-soundboard:
+    build: ./soundboard-panel
+    container_name: r2-soundboard
+    networks:
+      - r2-net
+
+networks:
+  r2-net:
+    driver: bridge

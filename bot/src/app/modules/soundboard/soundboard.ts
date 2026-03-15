@@ -63,7 +63,7 @@ export class Soundboard extends Module {
     );
 
 
-    app.use(express.static("soundboard-panel/dist"));
+    // app.use(express.static("soundboard-panel/dist"));
     app.use("/api", soundboardRouter);
 
     logger.info(`Sounds directory: ${soundsDir}`);
@@ -81,8 +81,7 @@ export class Soundboard extends Module {
       logger.info(`SoundBoard module started on http://localhost:${port}`);
     });
   }
-
-
+  
   async connectToVoiceChannel(target: VoiceChannel) {
     const connection = joinVoiceChannel({
       channelId: target.id,
