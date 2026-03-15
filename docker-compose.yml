@@ -1,5 +1,5 @@
 services:
-  nginx:
+  r2-nginx:
     build: ./nginx
     container_name: r2-nginx
     volumes:
