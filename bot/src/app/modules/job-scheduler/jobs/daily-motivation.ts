@@ -1,5 +1,5 @@
 import { JobExecutionType, JobTag } from "../../../../generated/prisma/enums.js";
-import { buildQuoteEmbed, getRandomQuote } from "../../../../lib/quote-api.js";
+import { buildQuoteEmbed, getDailyQuote } from "../../../../lib/quote-api.js";
 import type Bot from "../../../bot.js";
 import { prisma } from "../../../db.js";
 import logger from "../../../logger.js";
@@ -19,7 +19,7 @@ export async function runMotivationalJob(bot: Bot, rawJobPayload: string) {
 	const payload = JSON.parse(rawJobPayload) as MotivationalJobPayload;
 
 	logger.debug(`Motivational job payload: ${JSON.stringify(payload)}`);
-	const quote = await getRandomQuote().catch((error) => {
+	const quote = await getDailyQuote().catch((error) => {
 		logger.error(error);
 	});
 	if (!quote) return;

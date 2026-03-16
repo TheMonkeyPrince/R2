@@ -1,4 +1,5 @@
 import { Command } from "./command.js";
+import config from "../config.js"
 
 import Ping from "./src/ping.js";
 import ConnectSoundboard from "./src/connect-soundboard.js";
@@ -14,8 +15,8 @@ import Votation from "./src/votation.js";
 import ToggleMotivation from "./src/toggle-motivation.js";
 import Record from "./src/record.js";
 import TrackJuan from "./src/track-juan.js";
-
-import config from "../config.js"
+import UBS from "./src/ubs.js";
+import ToggleBadminton from "./src/toggle-badminton.js";
 
 const commands = [
 	new Ping(),
@@ -32,6 +33,8 @@ const commands = [
 	new ToggleMotivation(),
 	new Record(),
 	new TrackJuan(),
+	new UBS(),
+	new ToggleBadminton(),
 ] as Command[];
 
 export default commands.filter(command => {

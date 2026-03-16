@@ -17,6 +17,8 @@
 		"votation": true,
 		"toggle-motivation": true,
 		"record": true,
-		"trackj": true
+		"trackj": true,
+		"ubs": true,
+		"toggle-badminton": true
 	}
 }
