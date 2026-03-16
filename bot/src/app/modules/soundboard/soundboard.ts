@@ -56,9 +56,16 @@ export class Soundboard extends Module {
     logger.debug(
       `Enabling CORS for Soundboard module for origin: ${SOUNDBOARD_ORIGIN}`
     );
+    let origin = SOUNDBOARD_ORIGIN;
+    // if no port set and origin is https, add port 443, otherwise add port 80
+    if (!origin.includes(":") && origin.startsWith("https://")) {
+      origin += ":443";
+    } else if (!origin.includes(":") && origin.startsWith("http://")) {
+      origin += ":80";
+    }
     app.use(
       cors({
-        origin: SOUNDBOARD_ORIGIN,
+        origin: origin,
       })
     );
 
