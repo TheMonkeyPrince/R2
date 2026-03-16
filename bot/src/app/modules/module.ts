@@ -2,12 +2,14 @@ import type Bot from "../bot.js";
 
 export abstract class Module {
 	protected readonly bot: Bot;
-	protected readonly name: string;
 	
-	constructor(bot: Bot, name: string) {
+	constructor(bot: Bot) {
 		this.bot = bot;
-		this.name = name;
 	}
 
 	abstract start(): Promise<void>;
+
+	static get name(): string {
+		throw new Error("Module name not defined");
+	}
 }

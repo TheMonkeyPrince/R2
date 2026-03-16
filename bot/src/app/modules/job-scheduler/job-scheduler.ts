@@ -19,8 +19,12 @@ interface Job {
 export class JobScheduler extends Module {
 	public static instance: JobScheduler;
 
+	static get name(): string {
+		return "JobScheduler";
+	}
+
 	constructor(bot: Bot) {
-		super(bot, "JobScheduler");
+		super(bot);
 		JobScheduler.instance = this;
 	}
 

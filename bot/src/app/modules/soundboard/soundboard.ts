@@ -35,8 +35,12 @@ export class Soundboard extends Module {
   public readonly audioPlayer: AudioPlayer;
   private readonly server: http.Server;
 
+  static get name(): string {
+    return "Soundboard";
+  }
+
   constructor(bot: Bot) {
-    super(bot, "Soundboard");
+    super(bot);
     Soundboard.instance = this;
 
     this.voiceRecorder = new VoiceRecorder({

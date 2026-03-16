@@ -15,7 +15,9 @@ import ToggleMotivation from "./src/toggle-motivation.js";
 import Record from "./src/record.js";
 import TrackJuan from "./src/track-juan.js";
 
-export default [
+import config from "../config.js"
+
+const commands = [
 	new Ping(),
 	new ConnectSoundboard(),
 	new CrazyFrog(),
@@ -31,3 +33,8 @@ export default [
 	new Record(),
 	new TrackJuan(),
 ] as Command[];
+
+export default commands.filter(command => {
+	const commandName = command.data.name;
+	return config.commands[commandName];
+});
