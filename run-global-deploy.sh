@@ -1,0 +1,1 @@
+sudo docker exec -it r2-bot npm run global-deploy
