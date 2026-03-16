@@ -46,8 +46,7 @@ export async function createBadmintonReminderJob(subscribedChannels: SubscribedC
 	const job = await prisma.scheduledJob.create({
 		data: {
 			executionType: JobExecutionType.CRON,
-			// cronExpr: '0 17 * * 1,2,4', // Every Monday, Tuesday, and Wednesday at 5 PM
-			cronExpr: '57 17 * * *', // Every Monday, Tuesday, and Wednesday at 5 PM
+			cronExpr: '0 17 * * 1,2,4', // Every Monday, Tuesday, and Wednesday at 5 PM
 			tag: JobTag.SEND_BADMINTON_REMINDER,
 			payload: JSON.stringify(payload),
 		}
