@@ -34,7 +34,7 @@ export default class Rename extends Command {
 			const targetMember = await channel.guild.members.fetch(target.id)
 			
 			targetMember.setNickname(newName).then(() => {
-				interaction.reply(`Name modified ! Lore: ${lore}`)
+				interaction.reply(`${target} renamed to ${newName} due lore reason: ${lore}`)
 			}).catch(() => {
 				interaction.reply({ content: "Missing permissions !", flags: MessageFlags.Ephemeral })
 			})
