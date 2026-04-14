@@ -2,6 +2,12 @@ FROM node:20-alpine
 
 ARG DATABASE_URL
 
+ENV TZ=Europe/Zurich
+
+RUN apk add --no-cache tzdata && \
+    cp /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
 WORKDIR /usr/src/app
 
 # Install ffmpeg (required for audio processing)
